@@ -2,65 +2,28 @@ package main
 
 import (
 	"fmt"
-	"golang/mydict"
+	"time"
 )
 
-//
-//func main() {
-//	dictionary := mydict.Dictionary{}
-//	fmt.Println(dictionary)
-//	dictionary["hello"] = "world"
-//	fmt.Println(dictionary)
-//	diResult := dictionary["hello"]
-//	fmt.Println(diResult)
-//
-//	dictionary = mydict.Dictionary{"first": "First word"}
-//	fmt.Println(dictionary["first"])
-//	search, err := dictionary.Search("first")
-//	if err != nil {
-//		fmt.Println(err)
-//	}
-//	fmt.Println(search)
-//
-//}
-//
-//func main() {
-//	dictionary := mydict.Dictionary{}
-//	word := "hello"
-//	definition := "greeting"
-//	err := dictionary.Add(word, definition)
-//	if err != nil {
-//		fmt.Println(err)
-//	}
-//	hello, _ := dictionary.Search(word)
-//	fmt.Println("found", word, "definition", hello)
-//	err2 := dictionary.Add(word, definition)
-//	if err2 != nil {
-//		fmt.Println(err2)
-//	}
-//	fmt.Println(definition)
-//}
-
-//func main() {
-//	dictionary := mydict.Dictionary{}
-//	baseWord := "hello"
-//	dictionary.Add(baseWord, "First")
-//	err := dictionary.Update(baseWord, "Second")
-//	if err != nil {
-//		fmt.Println(err)
-//	}
-//	word, err := dictionary.Search(baseWord)
-//	fmt.Println(word)
-//}
-
 func main() {
-	dictionary := mydict.Dictionary{}
-	baseWord := "hello"
-	baseDefinition := "First"
-	dictionary.Add(baseWord, baseDefinition)
-	err := dictionary.Delete(baseWord)
-	if err != nil {
-		fmt.Println(err)
+	c := make(chan string, 2)
+	people := [5]string{"nico", "flym", "dal", "woo", "dwd"}
+	for _, person := range people {
+		go isSexy(person, c)
 	}
-	fmt.Println(dictionary)
+	for i := 0; i < len(people); i++ {
+		fmt.Println(<-c)
+	}
+}
+
+func sexyCount(person string) {
+	for i := 0; i < 10; i++ {
+		fmt.Println(person, "is sexy", i)
+		time.Sleep(time.Second)
+	}
+}
+
+func isSexy(person string, c chan string) {
+	time.Sleep(time.Second * 5)
+	c <- person + " is sexy"
 }
