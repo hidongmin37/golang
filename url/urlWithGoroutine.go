@@ -1,15 +1,20 @@
 package url
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 )
 
+type result struct {
+	url    string
+	status string
+}
+
 func main() {
-	var results = make(map[string]string)
+	c := make(chan result)
+
 	urls := []string{
-		"https://www.airbnb.com/",
+		"https://www.airbnbd.com/", // FAILED
 		"https://www.google.com/",
 		"https://www.amazon.com/",
 		"https://www.reddit.com/",
@@ -18,29 +23,23 @@ func main() {
 		"https://www.instagram.com/",
 		"https://academy.nomadcoders.co/",
 	}
-	//results["gello"] = "hello"
 	for _, url := range urls {
-		result := "OK"
-		err := hitURL(url)
-		if err != nil {
-			result = "FAILED"
-		}
-		results[url] = result
+		go hitURL2(url, c)
+	}
+	for i := 0; i < len(urls); i++ {
+		res := <-c
+		fmt.Println(res.url, res.status)
 	}
 
-	for url, result := range results {
-		fmt.Println(url, result)
-	}
 }
 
-var errRequestFailed = errors.New("request failed")
-
-func hitURL(url string) error {
+// <- with parameter는 보내는 것 만 된다.
+func hitURL2(url string, c chan<- result) {
 	fmt.Println("Checking URL", url)
 	resp, err := http.Get(url)
+	status := "OK"
 	if err != nil || resp.StatusCode >= 400 {
-		fmt.Println(err, resp.StatusCode)
-		return errRequestFailed
+		status = "FAILED"
 	}
-	return nil
+	c <- result{url: url, status: status}
 }
