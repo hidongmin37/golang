@@ -1,65 +1,92 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
-	"net/http"
-	"strconv"
-
-	"github.com/PuerkitoBio/goquery"
 )
 
-var baseUrl string = "https://www.saramin.co.kr/zf_user/jobs/list/job-category?cat_kewd=84&loc_mcd=101000&exp_cd=2&exp_max=2&search_optional_item=y&search_done=y&panel_count=y&preview=y&isAjaxRequest=0&page_count=50&sort=RL&type=job-category&is_param=1&isSearchResultEmpty=1&isSectionHome=0&searchParamCount=4#searchTitle"
-var baseOfBaseUrl string = "https://www.saramin.co.kr"
+var (
+	ErrorNotImplemented = errors.New("Not Implemented yet")
+	ErrorTruckNotFound  = errors.New("Truck not found")
+)
+
+type Truck interface {
+	LoadCargo() error
+	UnloadCargo() error
+}
+
+type NormalTruck struct {
+	id    string
+	cargo int
+}
+
+type ElectricTruck struct {
+	id      string
+	cargo   int
+	battery int
+}
+
+func (e *ElectricTruck) LoadCargo() error {
+	e.cargo += 2
+	e.battery -= 1
+	return nil
+}
+
+func (e *ElectricTruck) UnloadCargo() error {
+	e.cargo = 0
+	e.battery -= 1
+	return nil
+}
+func (t *NormalTruck) LoadCargo() error {
+	t.cargo += 2
+	return nil
+}
+
+func (t *NormalTruck) UnloadCargo() error {
+	t.cargo = 0
+	return nil
+}
+
+func processTruck(truck Truck) error {
+	fmt.Printf("Processing truck: %+v \n", truck)
+	err := truck.LoadCargo()
+	if err != nil {
+		return fmt.Errorf("Error loading cargo: %v", err)
+	}
+
+	err = truck.UnloadCargo()
+	if err != nil {
+		return fmt.Errorf("Error unloading cargo: %w", err)
+	}
+
+	return nil
+}
 
 func main() {
-	totalPages := getPages()
-	for i := 1; i < totalPages+1; i++ {
-		getPage(i)
+	nt := &NormalTruck{id: "1"}
+	et := &ElectricTruck{id: "2"}
+
+	person := make(map[string]interface{}, 0)
+
+	person["name"] = "Tiago"
+	person["age"] = 18
+
+	age, exists := person["width"].(int)
+	if !exists {
+		log.Fatal("Age is not an integer")
+		return
 	}
+	log.Println("Age is", age)
 
-}
-
-func getPage(page int) {
-	pageNumber := "&page=" + strconv.Itoa(page)
-	pageUrl := baseUrl + pageNumber
-	resp, err := http.Get(pageUrl)
-	checkErr(err)
-	checkCode(resp)
-	defer resp.Body.Close()
-	doc, err := goquery.NewDocumentFromReader(resp.Body)
-	checkErr(err)
-	doc.Find("h2.job_tit > a").Each(func(i int, s *goquery.Selection) {
-		link, _ := s.Attr("href")
-		fmt.Println(link)
-	})
-
-}
-
-func getPages() int {
-	pages := 0
-	resp, err := http.Get(baseUrl)
-	checkErr(err)
-	checkCode(resp)
-
-	defer resp.Body.Close()
-
-	doc, err := goquery.NewDocumentFromReader(resp.Body)
-	checkErr(err)
-	doc.Find(".PageBox").Each(func(i int, s *goquery.Selection) {
-		pages = s.Children().Length()
-	})
-	return pages
-}
-
-func checkErr(err error) {
+	err := processTruck(nt)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalf("error processing truck: %v", err)
 	}
-}
-
-func checkCode(resp *http.Response) {
-	if resp.StatusCode != 200 {
-		log.Fatalln("Request failed with status code: " + strconv.Itoa(resp.StatusCode))
+	err = processTruck(et)
+	if err != nil {
+		log.Fatalf("error processing truck: %v", err)
 	}
+	log.Println(nt.cargo)
+	log.Println(et.battery)
 }
