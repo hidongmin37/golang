@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"sync"
 )
 
 var (
@@ -19,6 +20,7 @@ type Truck interface {
 type NormalTruck struct {
 	id    string
 	cargo int
+	sync.RWMutex
 }
 
 type ElectricTruck struct {
@@ -44,6 +46,8 @@ func (t *NormalTruck) LoadCargo() error {
 }
 
 func (t *NormalTruck) UnloadCargo() error {
+	t.Lock()
+	defer t.Unlock()
 	t.cargo = 0
 	return nil
 }
